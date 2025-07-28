@@ -1,6 +1,7 @@
 from django.db import IntegrityError, DatabaseError
 from rest_framework.serializers import ValidationError
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import Http404
 
 from src.projects.dto.filters import ProjectFilterDTO
 from src.projects.repositories.project import ProjectRepository
@@ -150,10 +151,21 @@ class ProjectService:
 
     def get_project_by_id(self, project_id: int) -> ServiceResponse:
         try:
-            project = self.repository.get_by_id(id_=project_id)
-            if not project:
-                raise ObjectDoesNotExist(f'Project with id {project_id} does not exist')
-            return ServiceResponse(data=project, success=True)
+            project = self.repository.get_by_id(project_id)
+            serializer = ProjectDetailDTO(project)
+            return ServiceResponse(data=serializer.data, success=True)
+
+        except Http404:
+            # Перехватываем Http404, который может быть вызван репозиторием
+            # (через get_object_or_404).
+            return ServiceResponse(
+                success=False,
+                error_type=ErrorType.NOT_FOUND,
+                message=f'Проект с id {project_id} не найден')
+
+            # if not project:
+            #     raise ObjectDoesNotExist(f'Project with id {project_id} does not exist')
+            # return ServiceResponse(data=project, success=True)
         except ObjectDoesNotExist as e:
             return ServiceResponse(
                 success=False,

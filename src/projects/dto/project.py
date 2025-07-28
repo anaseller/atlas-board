@@ -29,9 +29,23 @@ class ProjectCreateDTO(serializers.ModelSerializer):
         ]
 
 class ProjectDetailDTO(serializers.ModelSerializer):
+    owner = serializers.StringRelatedField(read_only=True)
+    team_lead = serializers.StringRelatedField(read_only=True)
+    members = serializers.StringRelatedField(many=True, read_only=True)
     class Meta:
         model = Project
-        exclude = [
+        fields = [
+            'id',
+            'name',
+            'description',
+            'owner',
+            'team_lead',
+            'members',
+            'start_date',
+            'end_date',
+            'status',
+            'is_active',
+            'priority',
             'created_at',
             'updated_at',
             'deleted_at',

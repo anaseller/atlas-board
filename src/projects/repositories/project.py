@@ -3,6 +3,7 @@ from django.db.models import Q, Count
 from typing import TypeVar, Optional
 from django.db.models import Model, QuerySet
 from django.db import DatabaseError, OperationalError
+from django.shortcuts import get_object_or_404
 
 from src.projects.models.project import Project
 from src.projects.repositories.base import BaseRepository
@@ -54,3 +55,10 @@ class ProjectRepository(BaseRepository):
                 raise OperationalError(f'Failed to retrieve {self.model.__name__} with id {id_}') from e
         else:
             raise ValueError('id must be positive integer')
+
+    def get_by_id(self, project_id: int) -> Project:
+        return get_object_or_404(
+            self.model.objects.select_related('owner', 'team_lead')\
+                              .prefetch_related('members', 'files'),
+            pk=project_id
+        )

@@ -2,7 +2,10 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status
+from rest_framework.views import APIView
+
 from src.projects.services.project import ProjectService
+from src.projects.services.service_responce import ErrorType
 
 
 @api_view(['GET'])
@@ -88,3 +91,29 @@ def get_all_project_files(request: Request, project_id:int) -> Response:
         {'message': result.message, 'errors': result.errors},
         status=status.HTTP_500_INTERNAL_SERVER_ERROR
     )
+
+class ProjectDetailAPIView(APIView):
+    # путь /api/v1/projects/{id}/
+
+    def get(self, request, pk, *args, **kwargs) -> Response:
+        service = ProjectService()
+        result = service.get_project_by_id(pk)
+
+        if result.success:
+            return Response(data=result.data, status=status.HTTP_200_OK)
+        else:
+            if result.error_type == ErrorType.NOT_FOUND:
+                return Response(
+                    {'message': result.message},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            elif result.error_type == ErrorType.VALIDATION_ERROR:
+                return Response(
+                    {'message': result.message, 'errors': result.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            else:
+                return Response(
+                    {'message': result.message, 'errors': result.errors},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
